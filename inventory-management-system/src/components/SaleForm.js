@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import axios from 'axios';
+import { calculateTotalPrice } from './helpers';
 
-const SaleForm = ({ products, calculateTotal }) => {
+const SaleForm = ({ products }) => {
   const [selectedProducts, setSelectedProducts] = useState([]);
 
   const handleAddProduct = (e) => {
@@ -14,10 +16,20 @@ const SaleForm = ({ products, calculateTotal }) => {
     setSelectedProducts(updatedProducts);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    calculateTotal(selectedProducts);
+    const totalPrice = calculateTotalPrice(selectedProducts);
+    alert(`Total Price: ${totalPrice}`);
     setSelectedProducts([]);
+
+    // You can send the selected products to the backend for further processing if needed
+    
+    try {
+      await axios.post('http://localhost:5000/sale', { products: selectedProducts });
+    } catch (error) {
+      console.error('Error processing sale:', error);
+      alert('Failed to process sale');
+    }
   };
 
   return (

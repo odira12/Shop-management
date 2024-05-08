@@ -1,14 +1,21 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 
-const AddProduct = ({ addProduct }) => {
+const AddProduct = () => {
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    addProduct({ name, price });
-    setName('');
-    setPrice('');
+    try {
+      await axios.post('http://localhost:5000/products', { name, price });
+      setName('');
+      setPrice('');
+      alert('Product added successfully');
+    } catch (error) {
+      console.error('Error adding product:', error);
+      alert('Failed to add product');
+    }
   };
 
   return (
