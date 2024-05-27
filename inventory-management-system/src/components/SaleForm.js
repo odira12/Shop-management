@@ -1,57 +1,42 @@
 import React, { useState } from 'react';
+import useFetch from '../hooks/useFetch';
+import { getTotalPrice } from '../helpers/helpers';
 import axios from 'axios';
-import { calculateTotalPrice } from './helpers';
 
-const SaleForm = ({ products }) => {
+const SaleForm = () => {
+  const { data: products, loading, error } = useFetch('http://localhost:5000/api/products');
   const [selectedProducts, setSelectedProducts] = useState([]);
 
-  const handleAddProduct = (e) => {
-    const productId = e.target.value;
-    const product = products.find(p => p.id === productId);
-    setSelectedProducts([...selectedProducts, product]);
+  const handleSelectProduct = (productId, quantity) => {
+    const product = products.find(p => p._id === productId);
+    setSelectedProducts([...selectedProducts, { ...product, quantity }]);
   };
 
-  const handleRemoveProduct = (productId) => {
-    const updatedProducts = selectedProducts.filter(p => p.id !== productId);
-    setSelectedProducts(updatedProducts);
+  const handleSale = () => {
+    selectedProducts.forEach(product => {
+      axios.post('http://localhost:5000/api/products/sell', { id: product._id, quantity: product.quantity })
+        .then(() => window.location.reload());
+    });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const totalPrice = calculateTotalPrice(selectedProducts);
-    alert(`Total Price: ${totalPrice}`);
-    setSelectedProducts([]);
+  const totalPrice = selectedProducts.reduce((total, product) => total + (product.price * product.quantity), 0);
 
-    // You can send the selected products to the backend for further processing if needed
-    
-    try {
-      await axios.post('http://localhost:5000/sale', { products: selectedProducts });
-    } catch (error) {
-      console.error('Error processing sale:', error);
-      alert('Failed to process sale');
-    }
-  };
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error.message}</p>;
 
   return (
     <div>
-      <h2>Sale Form</h2>
-      <form onSubmit={handleSubmit}>
-        <select onChange={handleAddProduct}>
-          <option value="">Select a Product</option>
-          {products.map(product => (
-            <option key={product.id} value={product.id}>{product.name}</option>
-          ))}
-        </select>
-        <ul>
-          {selectedProducts.map(product => (
-            <li key={product.id}>
-              {product.name} - {product.price}
-              <button type="button" onClick={() => handleRemoveProduct(product.id)}>Remove</button>
-            </li>
-          ))}
-        </ul>
-        <button type="submit">Calculate Total</button>
-      </form>
+      <h1>Sales</h1>
+      <select onChange={(e) => handleSelectProduct(e.target.value, 1)}>
+        <option value="">Select Product</option>
+        {products.map(product => (
+          <option key={product._id} value={product._id}>
+            {product.name} - ${product.price} - {product.stock} in stock
+          </option>
+        ))}
+      </select>
+      <button onClick={handleSale}>Process Sale</button>
+      <h2>Total Price: ${totalPrice}</h2>
     </div>
   );
 };

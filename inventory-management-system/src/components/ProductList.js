@@ -1,28 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import useFetch from '../hooks/useFetch';
 import axios from 'axios';
 
 const ProductList = () => {
-  const [products, setProducts] = useState([]);
+  const { data: products, loading, error } = useFetch('http://localhost:5000/api/products');
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
-    try {
-      const response = await axios.get('http://localhost:5000/products');
-      setProducts(response.data);
-    } catch (error) {
-      console.error('Error fetching products:', error);
-    }
+  const deleteProduct = (id) => {
+    axios.delete(`http://localhost:5000/api/products/${id}`)
+      .then(() => window.location.reload());
   };
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error.message}</p>;
 
   return (
     <div>
-      <h2>Product List</h2>
+      <h1>Product List</h1>
       <ul>
-        {products.map((product, index) => (
-          <li key={index}>{product.name} - {product.price}</li>
+        {products.map(product => (
+          <li key={product._id}>
+            {product.name} - ${product.price} - {product.stock} in stock
+            <button onClick={() => deleteProduct(product._id)}>Delete</button>
+          </li>
         ))}
       </ul>
     </div>
